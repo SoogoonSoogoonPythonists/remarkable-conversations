@@ -4,6 +4,8 @@
 
 ---
 
+### scoped_session을 사용하지 않아도 매번 session을 계속 새로 생성해서 사용하는거면 다중스레드에서도 매번 새로운 session을 만드니까 문제없는거 아닌가?
+
 > sqlalchemy 질문이 있습니다. 
 > 
 > scoped_session을 사용하지 않아도 매번 session을 계속 새로 생성해서 사용하는거면 다중스레드에서도 매번 새로운 session을 만드니까 문제없는거 아닌가?
