@@ -1,4 +1,4 @@
-# FastAPI Chat
+## FastAPI 사용자 모임
 
 [FastAPI 사용자 모임](https://open.kakao.com/o/gm7tYg6c) 방에서 나온 내용 중 일부를 공유합니다.
 
