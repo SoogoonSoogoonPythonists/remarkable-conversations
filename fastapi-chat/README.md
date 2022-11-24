@@ -89,3 +89,9 @@
 > 3. 저도 스프링에서 비동기를 사용하지 않아서 이건 잘 모르겠네요. 멀티스레드의 경우 당연히 @Transactional 어노테이션 제대로 동작합니다. 스프링의 경우 WAS에서 다중 스레드를 띄워놓는 형태로 동작하는데 당연히 각각의 스레드는 별개이니까요.
 
 > 답변 감사합니다! 어떤 문제를 해결하려고 하시는지 이해가 되네요. 저도 좀 더 고민해보고 괜찮은 아이디어가 나오면 공유해보겠습니다 ㅎㅎ
+
+### Starlette만든 encode에서 작성한 글인데 ASGI에 대해 이해하기 아주 좋은글 같아서 공유드립니다.
+
+> - https://www.encode.io/articles/asgi-http
+> - https://www.encode.io/articles/working-with-http-requests-in-asgi
+> - https://www.encode.io/articles/python-async-frameworks-beyond-developer-tribalism
