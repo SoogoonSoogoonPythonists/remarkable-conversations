@@ -95,3 +95,9 @@
 > - https://www.encode.io/articles/asgi-http
 > - https://www.encode.io/articles/working-with-http-requests-in-asgi
 > - https://www.encode.io/articles/python-async-frameworks-beyond-developer-tribalism
+
+### 추천해주실만한 프로젝트 구조가 있을까요?
+
+  > - https://github.com/Netflix/dispatch
+  > - https://github.com/zhanymkanov/fastapi-best-practices
+  
