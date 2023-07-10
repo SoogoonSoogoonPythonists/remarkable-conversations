@@ -90,6 +90,19 @@
 
 > 답변 감사합니다! 어떤 문제를 해결하려고 하시는지 이해가 되네요. 저도 좀 더 고민해보고 괜찮은 아이디어가 나오면 공유해보겠습니다 ㅎㅎ
 
+### Line Chatbot 공식 sdk 사용법 line-bot-sdk-python
+> FastAPI + Line Chatbot을 사용하고 싶은데, Line Chatbot 공식 sdk 사용법
+> 하지만 이 라이브러리는 동기적 작업만 허용하고, flask를 위한 라이브러리였다.
+> ### 해결방법
+> 1. https://github.com/Shivelight/line-bot-sdk-python-extra 이 라이브러리를 설치한다.
+> 2. linebotx 라이브러리를 import 한다.
+> 3. 다음과 같은 방법으로 비동기 작업을 수행한다.
+> ![](./images/2.png)
+> 4. AioHttpClient 클래스를 상속받아서, post와 put 메소드를 오버라이딩한다.
+> ![](./images/3.png)
+> ### 추가정보
+> - linebotx라이브러리의 aiohttp요청 제한시간이 30초로 설정돼 있다.
+
 ### Starlette만든 encode에서 작성한 글인데 ASGI에 대해 이해하기 아주 좋은글 같아서 공유드립니다.
 
 > - https://www.encode.io/articles/asgi-http
