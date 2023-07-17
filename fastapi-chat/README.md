@@ -93,14 +93,14 @@
 ### Line Chatbot 공식 sdk 사용법 line-bot-sdk-python
 > FastAPI + Line Chatbot을 사용하고 싶은데, Line Chatbot 공식 sdk 사용법
 > 하지만 이 라이브러리는 동기적 작업만 허용하고, flask를 위한 라이브러리였다.
-> ### 해결방법
+> 해결방법
 > 1. https://github.com/Shivelight/line-bot-sdk-python-extra 이 라이브러리를 설치한다.
 > 2. linebotx 라이브러리를 import 한다.
 > 3. 다음과 같은 방법으로 비동기 작업을 수행한다.
 > ![](./images/2.png)
 > 4. AioHttpClient 클래스를 상속받아서, post와 put 메소드를 오버라이딩한다.
 > ![](./images/3.png)
-> ### 추가정보
+> 추가정보
 > - linebotx라이브러리의 aiohttp요청 제한시간이 30초로 설정돼 있다.
 
 ### Starlette만든 encode에서 작성한 글인데 ASGI에 대해 이해하기 아주 좋은글 같아서 공유드립니다.
@@ -111,6 +111,19 @@
 
 ### 추천해주실만한 프로젝트 구조가 있을까요?
 
-  > - https://github.com/Netflix/dispatch
-  > - https://github.com/zhanymkanov/fastapi-best-practices
-  
+> - https://github.com/Netflix/dispatch
+> - https://github.com/zhanymkanov/fastapi-best-practices
+
+### Controller를 Class 기반으로 개발할 경우 이슈들
+
+> 의미있을만한 내용은 아카이빙 하신다고 하셔서 혹시 Class 형식으로 개발하실 분들 위해서 해결했던 내용들은 정리하고 갈게요 !
+>
+> 1. FastAPI Utils는 지원종료. FastAPI Restful로 이전되어 쭉 유지보수 되고 있습니다.
+> 
+> 2. cbv 데코레이터를 통해서 class 기반으로 작성하시면 self 인자를 묵인 한채로 이후 인자만 체크하여 이전과 같은 함수형 개발을 하실 수 있습니다.
+>
+> 3. 지원중단 된 FastAPI Utils의 cbv 사용 시에는 prefix 경로가 두번 적용되는 문제가 있습니다.
+> https://github.com/dmontagu/fastapi-utils/issues/154
+> 
+> 4. cbv의 경우 Depend를 사용한 DI에 의존합니다.
+> 다른 형식으로 주입할 수 있긴 하지만 각 메소드별로 반환값에 대한 Pydantic Base모델을 상속한 Item을 각각 만들어야 합니다.
