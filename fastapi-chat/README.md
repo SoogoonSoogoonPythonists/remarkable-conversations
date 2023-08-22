@@ -127,3 +127,13 @@
 > 
 > 4. cbv의 경우 Depend를 사용한 DI에 의존합니다.
 > 다른 형식으로 주입할 수 있긴 하지만 각 메소드별로 반환값에 대한 Pydantic Base모델을 상속한 Item을 각각 만들어야 합니다.
+
+### FastAPI가 요청을 받으면 어떻게 내부에서 처리하는지
+
+> FastAPI가 요청을 받으면 어떻게 내부에서 처리하는지 uvicorn.run(...) 부터 한줄씩 동작을 따라가며 정리한 글을 썼습니다.
+>
+> 디버깅 찍으면 금방 볼수 있긴하나, 따로 설명이 없기에 제가 이해하는 한도내에서 열심히 추가 코멘트를 달았습니다.
+>
+> https://rumbarum.oopy.io/post/examine-fastapi-handling-request-line-by-line-with-comment
+> 
+> 많은 응원과 피드백 부탁드립니다!
