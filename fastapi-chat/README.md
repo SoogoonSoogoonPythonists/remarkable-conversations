@@ -137,3 +137,57 @@
 > https://rumbarum.oopy.io/post/examine-fastapi-handling-request-line-by-line-with-comment
 > 
 > 많은 응원과 피드백 부탁드립니다!
+
+### FastAPI에서 controller class를 사용할수있을까요? 
+
+[fastapi-utils cbv](https://fastapi-utils.davidmontague.xyz/user-guide/class-based-views/)가 그나마 잘 사용되는 프로젝트로 보이는데 다른 방법이 있는가 싶어서 여쭤봅니다. 
+목적은 중복되는 의존성을 class에 넣고 라우터에서 사용하고 싶어 그렇습니다.
+지금은 라우터를 제외하고는 dataclass로 만들어서 
+[dependency injector 라이브러리](https://python-dependency-injector.ets-labs.org/)를 사용해서 주입하는 형태로 쓰고 있습니다. 
+
+> A1. 
+> 
+> 중복되는 의존성을 처리함이 목적이라면, Depends를 Annotated에 담아서 처리하는 방식은 어떨까요? ([참고링크](https://fastapi.tiangolo.com/tutorial/dependencies/#share-annotated-dependencies))
+>
+> A1-Q1.
+>
+> 그렇군요 결국 annotated 를 써야하는가 보네요 생소한 문법이라 잘 받아들지질 못했습니다. 주말에 한번 변경해봐야겠네요. 감사합니다
+> 
+
+> A2.
+> 
+> 중복되는 의존성이 어떤걸 말씀하시는 걸까요?
+> 1. request 처리전 동작 이라면, Router dependencies에 넣으시면 될것으로 보이고요.
+> 2. route에서 사용할 파람을 공통화 시키는 얘기하시는 거라면, fastapi Param들을 받아서 리턴하는 함수를 만들고 Depends로 등록하시면 될것 같아요. Depends에 등록한 함수에서 route에서 사용할 파람들을 다 처리할 수 있어요. 그러나 모든걸 다 처리하시게 만드시면 복잡 할 수 있기 때문에 적당히 모으시길 추천합니다. 
+>
+> `Annotated` 는 간단히 말하면 Type Hint Allias 입니다. 요구하신 바랑 맞을지 모르겠습니다.  
+
+> A3. 
+>
+> 정확하게 2번 입니다.  
+> 의존성이 여러개가 되는 경우가 종종 있는데  중복되는 코드가 router마다 있어서 모아서 처리하려고 했습니다. 
+> Annotated를 사용해보려고 했는데 의존성 주입 라이브러리가 Annotated가 적용이 안되어 억지로 아래와 같은 형태로 구현해서 쓰고는 있습니다. 
+>
+> ```python
+> @dataclass(init=True, slots=True)
+> class Dependencies: 
+>     a_service: AService
+>     b_service: BService
+>     …
+> 
+>     @inject
+>     def __init__(
+>         self,
+>         a_service=Depends(Provide[Container.a_service]),
+>         b_service=Depends(Provide[Container.b_service]),
+>     ) -> None:
+>     ...
+> 
+> 
+> @router.get("")
+> async def get(
+>     *,
+>     depends: Dependencies = Depends(),
+> ):
+>     ...
+> ```
