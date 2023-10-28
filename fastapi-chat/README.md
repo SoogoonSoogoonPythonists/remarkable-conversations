@@ -191,3 +191,62 @@
 > ):
 >     ...
 > ```
+
+### 리턴이 없는 함수의 경우 반환 어노태이션을 보통 둘중이서 어떤것 쓰시나요? 
+
+1. `None`
+2. `typing.NoReturn`
+
+2번 쓰는게 정석일까요?
+
+> A1. 1번이에요. 2번은 예외던지는것처럼 리턴값 없을 때 사용합니다.
+
+> A2. 파이썬 함수는 리턴이 없더라도 `None`을 항시 리턴한다고 알고있고, 그래서 `None`이 더 적합하다고 생각합니다.
+>
+> ```python
+> import dis
+>
+> def f1():
+>     print("Hello World")
+>     return None
+> def f2():
+>     print("Hello World")
+>     return
+> def f3():
+>     print("Hello World")
+>     
+> dis.dis(f1)
+>   4           0 LOAD_GLOBAL              0 (print)
+>               2 LOAD_CONST               1 ('Hello World')
+>               4 CALL_FUNCTION            1
+>               6 POP_TOP
+>   5           8 LOAD_CONST               0 (None)
+>              10 RETURN_VALUE
+> dis.dis(f2)
+>   8           0 LOAD_GLOBAL              0 (print)
+>               2 LOAD_CONST               1 ('Hello World')
+>               4 CALL_FUNCTION            1
+>               6 POP_TOP
+>   9           8 LOAD_CONST               0 (None)
+>              10 RETURN_VALUE
+> dis.dis(f3)
+>  12           0 LOAD_GLOBAL              0 (print)
+>               2 LOAD_CONST               1 ('Hello World')
+>               4 CALL_FUNCTION            1
+>               6 POP_TOP
+>               8 LOAD_CONST               0 (None)
+>              10 RETURN_VALUE
+> ```
+
+> A3.
+> 
+> 조금 보충하자면 `typing.NoReturn`은 `typing.Never`(파이썬 3.11에서 추가)와 같고, 바텀타입(타입스크립트의 `never`와 같음)입니다. 파이썬에서 이는 공집합이기 때문에, 식의 평가값이 그렇게 추론되는 경우 "도달 불가능한 경우"임을 나타낼 수 있습니다. 파이참에서는 최근 업데이트로 이 부분이 경고에 반영되었습니다. VSCode의 pylance에서도 정상적으로 처리됩니다.
+> 
+> ```python
+> foo()
+> bar()  # foo 함수의 리턴 타입이 typing.NoReturn이나 typing.Never인 경우 도달 불가능함
+> ```
+> 
+> 명시하지 않아도 타입가드 등 타입좁힘으로 인해서도 typing.Never가 자연스럽게 추론될 수 있고, 대표적으로 match문이나 if문에서 그렇게 될 수 있습니다.
+> 
+> 꼭 함수 내에 직접적으로 raise가 있지 않더라도, 키보드 인터럽트나 내부 함수에서의 예외 발생 등 raise를 통해서만 빠져나갈 수 있는 함수에서도 typing.NoReturn(typing.Never)를 리턴 타입으로 사용합니다. 무한루프를 가지는 함수가 여기에 해당합니다.
