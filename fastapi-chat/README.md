@@ -162,7 +162,7 @@
 >
 > `Annotated` 는 간단히 말하면 Type Hint Allias 입니다. 요구하신 바랑 맞을지 모르겠습니다.  
 
-> A3. 
+> A2-Q2. 
 >
 > 정확하게 2번 입니다.  
 > 의존성이 여러개가 되는 경우가 종종 있는데  중복되는 코드가 router마다 있어서 모아서 처리하려고 했습니다. 
@@ -191,6 +191,58 @@
 > ):
 >     ...
 > ```
+
+> A3.
+>
+> 1. 일단 저는 공통으로 묶는 것보다 풀어서 넣는걸 선호합니다. (Explicit is better than implicit.) 
+> 
+> ```python
+> @router.get("")
+> async def get(
+>     *,
+>     a_service:AService=Depends(Provide[Container.a_service]),
+>     b_service:BService=Depends(Provide[Container.b_service]),
+> ):
+>     ...
+> ```
+> 
+> 1-1 코드가 여러 라우트에 중복 되긴 하지만, 의존성들이 사용하는 곳에서 분명하게 명시되기 때문에 관계 파악하기도 쉽습니다.
+> 1-2 공통 코드를 사용시, 공통 코드 수정이 필요한 경우,  공통 코드를 사용하는 모든 함수들의 영향을 확인해야 합니다.
+> 1-3 지금은 공통이지만 또 공통이 아니게 되는 경우도 자주 발생하기때문에 성급한 최적화가 될 수도 있습니다.
+> 
+> 
+> 2. 그래도 묶는게 필요하시면, 지금 하시는 방식도 충분히 괜찮아 보입니다. 
+> 
+> 타입 힌팅이 Dependencies에 적용 되어 있기 때문에 ide에서도 지원을 받을 수 있는 것으로 보입니다.
+> 조금 더 개선의 여지를 만들자면, 전 아래처럼 쓸 듯 합니다.
+> 
+> ```python
+> @dataclass(init=True, slots=True)
+> class Dependencies:
+>     a_service_provider: Factory[AService]
+>     b_service_provider: Factory[BService]
+>     ...
+> 
+>     @inject
+>     def __init__(
+>         self,
+>         a_service_provider=Depends(Provide[Container.a_service.provider]),
+>         b_service_provider=Depends(Provide[Container.b_service.provider]),
+>     ) -> None:
+>     ...
+>     
+> 
+> @router.get("")
+> async def get(
+>     *,
+>     depends: Dependencies = Depends(),
+> ):
+>     ...
+> ```
+> 
+> 이렇게 하면 좋은 이유는, 기존 코드는 D.I 라이브러리가 Service를 FastAPI 동작시점에 주입하기 때문에, 테스트코드 짜실때 Service 오버라이딩이 안됩니다. 
+> 서비스를 별도로 오버라이딩 하실 필요가 없으시다면 기존 코드로도 충분합니다.
+> 응답 레이턴시가 중요하신 경우라면,  pure class로 갈아타시는게 조금더 빨라지실수도 있습니다.
 
 ### 리턴이 없는 함수의 경우 반환 어노태이션을 보통 둘중이서 어떤것 쓰시나요? 
 
