@@ -137,3 +137,220 @@
 > https://rumbarum.oopy.io/post/examine-fastapi-handling-request-line-by-line-with-comment
 > 
 > 많은 응원과 피드백 부탁드립니다!
+
+### FastAPI에서 controller class를 사용할수있을까요? 
+
+[fastapi-utils cbv](https://fastapi-utils.davidmontague.xyz/user-guide/class-based-views/)가 그나마 잘 사용되는 프로젝트로 보이는데 다른 방법이 있는가 싶어서 여쭤봅니다. 
+목적은 중복되는 의존성을 class에 넣고 라우터에서 사용하고 싶어 그렇습니다.
+지금은 라우터를 제외하고는 dataclass로 만들어서 
+[dependency injector 라이브러리](https://python-dependency-injector.ets-labs.org/)를 사용해서 주입하는 형태로 쓰고 있습니다. 
+
+> A1. 
+> 
+> 중복되는 의존성을 처리함이 목적이라면, Depends를 Annotated에 담아서 처리하는 방식은 어떨까요? ([참고링크](https://fastapi.tiangolo.com/tutorial/dependencies/#share-annotated-dependencies))
+>
+> A1-Q1.
+>
+> 그렇군요 결국 annotated 를 써야하는가 보네요 생소한 문법이라 잘 받아들지질 못했습니다. 주말에 한번 변경해봐야겠네요. 감사합니다
+> 
+
+> A2.
+> 
+> 중복되는 의존성이 어떤걸 말씀하시는 걸까요?
+> 1. request 처리전 동작 이라면, Router dependencies에 넣으시면 될것으로 보이고요.
+> 2. route에서 사용할 파람을 공통화 시키는 얘기하시는 거라면, fastapi Param들을 받아서 리턴하는 함수를 만들고 Depends로 등록하시면 될것 같아요. Depends에 등록한 함수에서 route에서 사용할 파람들을 다 처리할 수 있어요. 그러나 모든걸 다 처리하시게 만드시면 복잡 할 수 있기 때문에 적당히 모으시길 추천합니다. 
+>
+> `Annotated` 는 간단히 말하면 Type Hint Allias 입니다. 요구하신 바랑 맞을지 모르겠습니다.  
+
+> A2-Q2. 
+>
+> 정확하게 2번 입니다.  
+> 의존성이 여러개가 되는 경우가 종종 있는데  중복되는 코드가 router마다 있어서 모아서 처리하려고 했습니다. 
+> Annotated를 사용해보려고 했는데 의존성 주입 라이브러리가 Annotated가 적용이 안되어 억지로 아래와 같은 형태로 구현해서 쓰고는 있습니다. 
+>
+> ```python
+> @dataclass(init=True, slots=True)
+> class Dependencies: 
+>     a_service: AService
+>     b_service: BService
+>     …
+> 
+>     @inject
+>     def __init__(
+>         self,
+>         a_service=Depends(Provide[Container.a_service]),
+>         b_service=Depends(Provide[Container.b_service]),
+>     ) -> None:
+>     ...
+> 
+> 
+> @router.get("")
+> async def get(
+>     *,
+>     depends: Dependencies = Depends(),
+> ):
+>     ...
+> ```
+
+> A3.
+>
+> 1. 일단 저는 공통으로 묶는 것보다 풀어서 넣는걸 선호합니다. (Explicit is better than implicit.) 
+> 
+> ```python
+> @router.get("")
+> async def get(
+>     *,
+>     a_service:AService=Depends(Provide[Container.a_service]),
+>     b_service:BService=Depends(Provide[Container.b_service]),
+> ):
+>     ...
+> ```
+> 
+> 1-1 코드가 여러 라우트에 중복 되긴 하지만, 의존성들이 사용하는 곳에서 분명하게 명시되기 때문에 관계 파악하기도 쉽습니다.
+> 1-2 공통 코드를 사용시, 공통 코드 수정이 필요한 경우,  공통 코드를 사용하는 모든 함수들의 영향을 확인해야 합니다.
+> 1-3 지금은 공통이지만 또 공통이 아니게 되는 경우도 자주 발생하기때문에 성급한 최적화가 될 수도 있습니다.
+> 
+> 
+> 2. 그래도 묶는게 필요하시면, 지금 하시는 방식도 충분히 괜찮아 보입니다. 
+> 
+> 타입 힌팅이 Dependencies에 적용 되어 있기 때문에 ide에서도 지원을 받을 수 있는 것으로 보입니다.
+> 조금 더 개선의 여지를 만들자면, 전 아래처럼 쓸 듯 합니다.
+> 
+> ```python
+> @dataclass(init=True, slots=True)
+> class Dependencies:
+>     a_service_provider: Factory[AService]
+>     b_service_provider: Factory[BService]
+>     ...
+> 
+>     @inject
+>     def __init__(
+>         self,
+>         a_service_provider=Depends(Provide[Container.a_service.provider]),
+>         b_service_provider=Depends(Provide[Container.b_service.provider]),
+>     ) -> None:
+>     ...
+>     
+> 
+> @router.get("")
+> async def get(
+>     *,
+>     depends: Dependencies = Depends(),
+> ):
+>     ...
+> ```
+> 
+> 이렇게 하면 좋은 이유는, 기존 코드는 D.I 라이브러리가 Service를 FastAPI 동작시점에 주입하기 때문에, 테스트코드 짜실때 Service 오버라이딩이 안됩니다. 
+> 서비스를 별도로 오버라이딩 하실 필요가 없으시다면 기존 코드로도 충분합니다.
+> 응답 레이턴시가 중요하신 경우라면,  pure class로 갈아타시는게 조금더 빨라지실수도 있습니다.
+
+### 리턴이 없는 함수의 경우 반환 어노태이션을 보통 둘중이서 어떤것 쓰시나요? 
+
+1. `None`
+2. `typing.NoReturn`
+
+2번 쓰는게 정석일까요?
+
+> A1. 1번이에요. 2번은 예외던지는것처럼 리턴값 없을 때 사용합니다.
+
+> A2. 파이썬 함수는 리턴이 없더라도 `None`을 항시 리턴한다고 알고있고, 그래서 `None`이 더 적합하다고 생각합니다.
+>
+> ```python
+> import dis
+>
+> def f1():
+>     print("Hello World")
+>     return None
+> def f2():
+>     print("Hello World")
+>     return
+> def f3():
+>     print("Hello World")
+>     
+> dis.dis(f1)
+>   4           0 LOAD_GLOBAL              0 (print)
+>               2 LOAD_CONST               1 ('Hello World')
+>               4 CALL_FUNCTION            1
+>               6 POP_TOP
+>   5           8 LOAD_CONST               0 (None)
+>              10 RETURN_VALUE
+> dis.dis(f2)
+>   8           0 LOAD_GLOBAL              0 (print)
+>               2 LOAD_CONST               1 ('Hello World')
+>               4 CALL_FUNCTION            1
+>               6 POP_TOP
+>   9           8 LOAD_CONST               0 (None)
+>              10 RETURN_VALUE
+> dis.dis(f3)
+>  12           0 LOAD_GLOBAL              0 (print)
+>               2 LOAD_CONST               1 ('Hello World')
+>               4 CALL_FUNCTION            1
+>               6 POP_TOP
+>               8 LOAD_CONST               0 (None)
+>              10 RETURN_VALUE
+> ```
+
+> A3.
+> 
+> 조금 보충하자면 `typing.NoReturn`은 `typing.Never`(파이썬 3.11에서 추가)와 같고, 바텀타입(타입스크립트의 `never`와 같음)입니다. 파이썬에서 이는 공집합이기 때문에, 식의 평가값이 그렇게 추론되는 경우 "도달 불가능한 경우"임을 나타낼 수 있습니다. 파이참에서는 최근 업데이트로 이 부분이 경고에 반영되었습니다. VSCode의 pylance에서도 정상적으로 처리됩니다.
+> 
+> ```python
+> foo()
+> bar()  # foo 함수의 리턴 타입이 typing.NoReturn이나 typing.Never인 경우 도달 불가능함
+> ```
+> 
+> 명시하지 않아도 타입가드 등 타입좁힘으로 인해서도 typing.Never가 자연스럽게 추론될 수 있고, 대표적으로 match문이나 if문에서 그렇게 될 수 있습니다.
+> 
+> 꼭 함수 내에 직접적으로 raise가 있지 않더라도, 키보드 인터럽트나 내부 함수에서의 예외 발생 등 raise를 통해서만 빠져나갈 수 있는 함수에서도 typing.NoReturn(typing.Never)를 리턴 타입으로 사용합니다. 무한루프를 가지는 함수가 여기에 해당합니다.
+
+### 트랜잭션 어노테이션과 데코레이터에 대해
+
+장고, 스프링 , nest 등의 프레임워크에서는 트랜젝션 어노테이션으로 작업단위를 분리하는데 - 선언형
+
+일반적으로 fastapi python계열에서 uow 패턴으로 
+작업 단위를 명시적으로 분리하여 사용하는 것 같습니다
+
+궁금한점으로 
+
+- 대체적으로 uow 패턴으로 관리하는데 왜 그런지?
+- 왜 파이썬은 명시적으로 관리하는 걸 선호하는지 
+
+자료를 뒤져봐도 속시원한 답이없어 여쭤봅니다...
+
+> A1-1. > 왜 파이썬은 명시적으로 관리하는 걸 선호하는지 
+> 
+> 이건 [파이썬 십계명](https://peps.python.org/pep-0020/ )에 있어서 그렇습니다. 
+>
+> _Explicit is better than implicit._
+>
+> A1-2. > 대체적으로 uow 패턴으로 관리하는데 왜 그런지?
+> 
+> 글쎄요. 저도 궁금한데, 아무래도 SQLAlchemy와 같은 라이브러리 영향이 크지 않았을까 생각합니다.
+> 
+> 반대로 사실 저는 장고나 스프링에서 왜 트렌잭션 어노테이션 단위로 데코레이터를 사용하는지 모르겠습니다.
+> uow 패턴을 쓰면 트랜잭션 범위를 작게 가져가고 내가 원하는 부분만 쓸 수 있는데 말이죠.
+> 
+> 스프링은 DDD 철학에 기반하여 설계된 걸로 알고있고, 파이썬은 딱히 그런게 없어서 훨씬 자유롭단 생각이 듭니다.
+> 원하면 스프링의 `@Transactional` 과 같은 데코레이터를 구현할 수도 있죠.
+> 그런데 딱히 그렇게 쓸 이유를 못느껴서 다들 그렇게 안쓰고 있다고 생각합니다.
+>
+> A1-3. 저는 fastapi에서도 트랜잭션을 스프링처럼 데코레이터(어노테이션)로 만들어서 사용합니다. 굳이 uow로 다룰 때랑 차이가 없다고 생각해서요.
+
+Q2. 데코레이터도 조금 지양하는 것 같은데 맞나요?
+
+> A2-1. 다만 데코레이터 자체가 조금 암묵적 느낌도 있고, 디버깅의 복잡도를 올리는 애라 정말 필요할 때만 쓰자라는 느낌은 있습니다.
+> 저는 개인적으로 보통 유틸리티성에만 씁니다.
+>
+> 특히 스프링의 어노테이션 범벅을 보면, 데코레이터를 써도 한두개만 써야지 싶어지더라구요.
+>
+> A2-2. 그리고, 데코레이터를 남용하진않지만 굳이 지양하지도 않습니다. 필요한곳에는 꼭 사용합니다.
+
+> A3. 스프링 어노테이션 범벅은 자바라는 한계도 있죠..
+>
+> 함수를 파이썬처럼 쉽게 부를 수 있는 상황이 아니라 bean으로 적재해야하고..
+
+### `FastAPI` 클래스 내부 명세 공개
+
+> https://fastapi.tiangolo.com/reference/fastapi/
+> 
+> 내부 클래스들에 대한 명세가 공개되었네요. 딥다이브 하실분들에게 많은 도움될 듯 합니다.
